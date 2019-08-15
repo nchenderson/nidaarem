@@ -60,10 +60,6 @@ Nicholas Henderson
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{
-SoftThresh <- function(x, lambda) {
-  sign(x)*pmax(abs(x) - lambda, 0.0)
-}
-
 LassoObj <- function(bbeta, X, y, lambda, stplngth) {
   X.beta <- as.vector(X\%*\%bbeta)
   ans <- sum((y - X.beta)*(y - X.beta))/2 + lambda*sum(abs(bbeta))
