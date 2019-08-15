@@ -1,0 +1,4 @@
+export(NesterovInitialize)
+importFrom("stats", "dbinom", "dnorm", "pnorm", "rbinom", "rchisq",
+             "rexp", "rnorm", "rpois", "runif", "rweibull", "uniroot")
+importFrom("utils", "modifyList")

@@ -1,0 +1,12 @@
+Package: nidaarem
+Type: Package
+Title: Damped Anderson Acceleration with Epsilon Monotonicity for Accelerating EM-Like Monotone Algorithms
+Version: 0.1
+Date: 2019-08-14
+Authors@R: c(person("Nicholas", "Henderson", email = "nhender5@jhmi.edu", role = c("cre", "aut")), person("Ravi", "Varadhan", email = "ravi.varadhan@jhu.edu", role = "aut"))
+Maintainer: Nicholas Henderson <nchender@umich.edu>
+Imports: stats, utils
+Description: Implements the NIDAAREM method for accelerating the convergence of slow, monotone sequences from smooth, fixed-point iterations such as the EM algorithm. 
+License: GPL-2
+Encoding: UTF-8
+LazyData: true
