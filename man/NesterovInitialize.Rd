@@ -12,7 +12,6 @@ performing a preliminary number of Nesterov steps.
 NesterovInitialize(par, fixptfn, objfn = NULL, test = "monotone", ..., 
                    control = list(maxiter = 500))
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{par}{
 The initial parameter vector
@@ -33,9 +32,6 @@ Additional arguments that may be needed by \code{fixptfn} or \code{objfn}
   \item{control}{
 A list of additional control parameters
 }
-}
-\details{
-%%  ~~ If necessary, more details than the description above ~~
 }
 \value{
 A list with the following components

@@ -2,7 +2,7 @@ Package: nidaarem
 Type: Package
 Title: Damped Anderson Acceleration with Epsilon Monotonicity for Accelerating EM-Like Monotone Algorithms
 Version: 0.1
-Date: 2019-08-14
+Date: 2019-09-12
 Authors@R: c(person("Nicholas", "Henderson", email = "nhender5@jhmi.edu", role = c("cre", "aut")), person("Ravi", "Varadhan", email = "ravi.varadhan@jhu.edu", role = "aut"))
 Maintainer: Nicholas Henderson <nchender@umich.edu>
 Imports: stats, utils
