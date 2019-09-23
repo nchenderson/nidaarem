@@ -51,8 +51,9 @@ daarem_lasso_gaussian_pgtn <- function(par, X, y, lambda, stplngth, nlag, a1, ka
         max.d <- max(tmp$d)
         min.d <- min(tmp$d)
         cond.number <- ifelse(max.d==min.d, 1, max.d/min.d)  ## to take care of cases where max.d=min.d=0
-        if(cond.number > 1e14) {
-            shrink.count <- shrink.count - 2
+        rho.max <- 1e16  ## try 1e16 instead?
+        if(cond.number > sqrt(rho.max)) {
+            shrink.count <- shrink.count - 1
         }
 
         ### Still need to compute Ftf
@@ -60,7 +61,19 @@ daarem_lasso_gaussian_pgtn <- function(par, X, y, lambda, stplngth, nlag, a1, ka
         tmp_lam <- DampingFind(uy.sq, dvec, a1, kappa, shrink.count, Ftf, lambda.start=lambda.ridge, r.start=r.penalty)
         lambda.ridge <- tmp_lam$lambda
         r.penalty <- tmp_lam$rr
-
+        
+        ##################################################
+        lambda.tmp <- -1e-16
+        if(min.d*min.d*rho.max - max.d*max.d < 0) { ## if "ridge regression condition number (with lambda=0) is greater than rho.max"
+           lambda.tmp <- (rho.max*min.d*min.d - max.d*max.d)/(1 - rho.max)
+        }
+        if(lambda.tmp > lambda.ridge) {
+            print('hello')
+            print(c(max.d, min.d, min.d*min.d*rho.max, max.d*max.d, lambda.ridge))
+        }
+        lambda.ridge <- max(c(lambda.tmp, lambda.ridge, 0.0))
+        ####################################################  
+        
         dd <- (dvec*uy)/(dvec^2 + lambda.ridge)
         gamma_vec <- crossprod(tmp$vt, dd)
 
