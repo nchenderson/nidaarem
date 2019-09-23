@@ -25,14 +25,6 @@ daarem.lasso <- function(par, X, y, lambda, stplngth=NULL,
   Fdiff <- Xdiff <- matrix(0.0, nrow=num.params, ncol=nlag)
   obj_funvals <- rep(NA, maxiter + 2)
 
-  ### Compute X'y and X'X and y'y
-#  if(family=="gaussian") {
-#     XtX <- crossprod(X, X)
-#     yty <- sum(y*y)
-     ## maybe modify code so we don't have to store XtX?
-#  }
-#  Xty <- crossprod(X, y)
-
   ### Compute step length
   if(is.null(stplngth) & family=="gaussian") {
       stplngth <- FindStepLengthGaussian(X, y, lambda)
