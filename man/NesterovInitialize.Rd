@@ -56,19 +56,6 @@ Nicholas Henderson
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{
-LassoObj <- function(bbeta, X, y, lambda, stplngth) {
-  X.beta <- as.vector(X\%*\%bbeta)
-  ans <- sum((y - X.beta)*(y - X.beta))/2 + lambda*sum(abs(bbeta))
-  return(-ans)
-}
-
-GDLassostep <- function(par, X, y, lambda, stplngth) {
-  beta.vec <- par
-  X.beta <- X\%*\%beta.vec
-  beta.vec <- SoftThresh(beta.vec + stplngth*crossprod(X, y - X.beta), 
-                         lambda=lambda*stplngth)
-  return(beta.vec)
-}
 
 n <- 1000
 p <- 100
@@ -79,11 +66,11 @@ yy <- XX\%*\%beta.coef + rnorm(n)
 VV <- eigen(crossprod(XX))
 LL <- max(VV$values)
 
-ne.mon <- NesterovInitialize(par=rep(0, p), fixptfn=GDLassostep, objfn = LassoObj, 
+ne.mon <- NesterovInitialize(par=rep(0, p), fixptfn=GDLassoStep, objfn = LassoObjFn, 
                                test = "monotone", X=XX, y=yy, lambda=.0001, 
                                stplngth=1/LL)
 
-ne.grad <- NesterovInitialize(par=rep(0, p), fixptfn=GDLassostep, objfn = LassoObj, 
+ne.grad <- NesterovInitialize(par=rep(0, p), fixptfn=GDLassoStep, objfn = LassoObjFn, 
                                 test = "gradient", X=XX, y=yy, lambda=.0001, 
                                 stplngth=1/LL)
 
