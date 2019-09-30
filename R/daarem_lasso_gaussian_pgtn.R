@@ -67,10 +67,9 @@ daarem_lasso_gaussian_pgtn <- function(par, X, y, lambda, stplngth, nlag, a1, ka
         if(min.d*min.d*rho.max - max.d*max.d < 0) { ## if "ridge regression condition number (with lambda=0) is greater than rho.max"
            lambda.tmp <- (rho.max*min.d*min.d - max.d*max.d)/(1 - rho.max)
         }
-        if(lambda.tmp > lambda.ridge) {
-            print('hello')
-            print(c(max.d, min.d, min.d*min.d*rho.max, max.d*max.d, lambda.ridge))
-        }
+        #if(lambda.tmp > lambda.ridge) {
+        #    print(c(max.d, min.d, min.d*min.d*rho.max, max.d*max.d, lambda.ridge))
+        #}
         lambda.ridge <- max(c(lambda.tmp, lambda.ridge, 0.0))
         ####################################################  
         
