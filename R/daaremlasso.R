@@ -1,4 +1,4 @@
-daarem.lasso <- function(par, X, y, lambda, stplngth=NULL,
+daarem.lasso <- function(par, X, y, lambda, stplngth=NULL, nesterov.init=FALSE,
                          family = c("gaussian", "binomial"), control=list()) {
 
   control.default <- list(maxiter=2000, order=10, tol=1.e-08, mon.tol=1, cycl.mon.tol=0.0, 
@@ -43,12 +43,25 @@ daarem.lasso <- function(par, X, y, lambda, stplngth=NULL,
   } else if(family == "binomial" & !control$objfn.check) {
       base_fn <- "binomial_b2"
   }
+  #if(nesterov.init=TRUE) {
+  #    tmp <- NesterovInitialize(par, fixptfn, )
+  #    par <- tmp$par
+  #}
+  nest.fpevals <- 0
+  if(nesterov.init & family=="gaussian") {
+        tmp <- NesterovInitialize(par=rep(0, p), fixptfn=GDLassoStep, objfn = LassoObjFn, 
+                     test = "monotone", X=X, y=y, lambda=lambda, stplngth=stplngth)
+        par <- tmp$par
+        nest.fpevals <- tmp$num.iter
+  }
   ans <- switch(base_fn, gauss_ngtp = daarem_lasso_gaussian_ngtp(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter, tol, mon.tol, cycl.mon.tol),
          gauss_pgtn = daarem_lasso_gaussian_pgtn(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter, tol, mon.tol, cycl.mon.tol),
          gauss_ngtp2 = daarem_lasso_gaussian_ngtp2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter, tol, mon.tol, cycl.mon.tol),
          gauss_pgtn2 = daarem_lasso_gaussian_pgtn2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter, tol, mon.tol, cycl.mon.tol),
          binomial_b = daarem_lasso_binomial(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter, tol, mon.tol, cycl.mon.tol),
          binomial_b2 = daarem_lasso_binomial2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter, tol, mon.tol, cycl.mon.tol))
+  ans$fpevals <- ans$fpevals + nest.fpevals
+  print(nest.fpevals)
   return(ans)
 }
 
