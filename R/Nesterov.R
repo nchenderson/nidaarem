@@ -49,7 +49,7 @@ NesterovObjNR <- function(par, fixptfn, objfn, ..., maxiter=maxiter, tol=tol) {
     warning("Algorithm did not converge")
   }
   value.obj <- objfn.val[k+1]
-  return(list(par=beta.old, value.obj=value.obj, objfn.val=objfn.val, fpevals=k, conv=conv))
+  return(list(par=beta.old, value.objfn=value.obj, objfn.track=objfn.val, fpevals=k, convergence=conv))
 }
 
 
@@ -86,7 +86,7 @@ NesterovObjR <- function(par, fixptfn, objfn, ..., maxiter=maxiter, tol=tol) {
     warning("Algorithm did not converge")
   }
   value.obj <- objfn.val[k]
-  return(list(par=beta.new, value.obj=value.obj, objfn.val=objfn.val, fpevals=k, conv=conv))
+  return(list(par=beta.new, value.objfn=value.obj, objfn.track=objfn.val, fpevals=k, convergence=conv))
 }
 
 
@@ -111,7 +111,7 @@ NesterovNoObjNR <- function(par, fixptfn, ..., maxiter=maxiter, tol=tol) {
     conv <- FALSE
     warning("Algorithm did not converge")
   }
-  return(list(par=beta.old, fpevals=k, conv=conv))
+  return(list(par=beta.old, fpevals=k, convergence=conv))
 }
 
 
@@ -148,5 +148,5 @@ NesterovNoObjR <- function(par, fixptfn, objfn, ..., maxiter=maxiter, tol=tol) {
     warning("Algorithm did not converge")
   }
   value.obj <- objfn.val[k]
-  return(list(par=beta.new, value.obj=value.obj, objfn.val=objfn.val, fpevals=k, conv=conv))
+  return(list(par=beta.new, fpevals=k, conv=convergence))
 }
