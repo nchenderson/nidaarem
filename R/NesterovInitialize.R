@@ -19,7 +19,7 @@ NesterovInitialize <-  function(par, fixptfn, objfn=NULL, test="monotone", ...,
         beta.new <- fixptfn(beta.vecy, ...) ## x_k, y_k = beta.vecy
         oval <- objfn(beta.new, ...)
         if(test=="monotone") {
-           done <- oval < objfn.val[k]
+           done <- oval < objfn.val[k] 
         } else if(test == "gradient") {
            done <- sum((beta.vecy - beta.new)*(beta.new - beta.old)) > 0 
         }        
