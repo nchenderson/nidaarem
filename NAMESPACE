@@ -1,4 +1,4 @@
-export(NesterovInitialize, SoftThresh, FindStepLengthGaussian, daarem.lasso)
-importFrom("stats", "dbinom", "dnorm", "pnorm", "rbinom", "rchisq",
-             "rexp", "rnorm", "rpois", "runif", "rweibull", "uniroot")
+export(NesterovInitialize, SoftThresh, FindStepLengthGaussian, daarem.lasso, LassoObjFn, 
+       GDLassoStep, Nesterov)
+importFrom("stats", "dbinom", "dnorm", "pnorm", "runif", "uniroot")
 importFrom("utils", "modifyList")
