@@ -4,6 +4,7 @@ FindStepLengthGaussian <- function(X, y, lam, pmax=10000, nmin=1000) {
   n <- nrow(X)
   if(n <= nmin) {
     Lmax <- norm(X, "2")^2
+    step <- 1/Lmax
     accurate <- TRUE
   } else if (n > nmin & p <= pmax){
     XtX <- crossprod(X)
@@ -18,9 +19,7 @@ FindStepLengthGaussian <- function(X, y, lam, pmax=10000, nmin=1000) {
     Lmax <- max(rowSums(abs(XtXt)))
     accurate <- FALSE
   }
-  if (accurate){
-    step <- 2/Lmax
-  } else {
+  if(!accurate) {
     beta.init <- rep(0, p)
     step <- 1/Lmax
     k <- 1
