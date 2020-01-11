@@ -1,14 +1,26 @@
 daarem.lasso <- function(par, X, y, lambda, stplngth=NULL, nesterov.init=FALSE,
-                         family = c("gaussian", "binomial"), control=list()) {
+                         nesterov.safe=TRUE, family = c("gaussian", "binomial"), control=list()) {
 
-  control.default <- list(maxiter=2000, order=10, tol=1.e-08, mon.tol=1, cycl.mon.tol=0.0, 
-                          objfn.check=TRUE, kappa=25, alpha=1.2)
+  if("objfn.check" %in% names(control)) {
+      if(control$objfn.check) {
+           control.default <- list(maxiter=2000, order=10, tol=1.e-08, mon.tol=1, cycl.mon.tol=0.0, 
+                                  objfn.check=TRUE, kappa=25, alpha=1.2)
+      }
+      else if(!control$objfn.check) {
+           control.default <- list(maxiter=2000, order=10, tol=1.e-08, mon.tol=0.95, cycl.mon.tol=0.0, 
+                                  objfn.check=TRUE, kappa=25, alpha=1.2)
+      }
+  } else {
+      control.default <- list(maxiter=2000, order=10, tol=1.e-08, mon.tol=1, cycl.mon.tol=0.0, 
+                              objfn.check=TRUE, kappa=25, alpha=1.2)
+  }
   namc <- names(control)
   if (!all(namc %in% names(control.default))) {
     stop("unknown names in control: ", namc[!(namc %in% names(control.default))])
   }
   control <- modifyList(control.default, control)
-
+  
+  
   family = match.arg(family)
 
   maxiter <- control$maxiter
@@ -48,20 +60,78 @@ daarem.lasso <- function(par, X, y, lambda, stplngth=NULL, nesterov.init=FALSE,
   #    par <- tmp$par
   #}
   nest.fpevals <- 0
-  if(nesterov.init & family=="gaussian") {
-        tmp <- NesterovInitialize(par=rep(0, p), fixptfn=GDLassoStep, objfn = LassoObjFn, 
-                     test = "monotone", X=X, y=y, lambda=lambda, stplngth=stplngth)
-        par <- tmp$par
-        nest.fpevals <- tmp$num.iter
+  if(nesterov.init & family=="gaussian" & nesterov.safe==TRUE) {
+        done <- FALSE
+        count <- 0
+        par.init <- par
+        total.fpevals <- 0
+        objfn.track <- NULL
+        while(!done & count < 5) {
+            neirun <- NesterovInitialize(par=par.init, fixptfn=GDLassoStep, objfn = LassoObjFn, 
+                           test = "monotone", X=X, y=y, lambda=lambda, stplngth=stplngth, control=list(maxiter=maxiter))
+            par <- neirun$par
+            nest.fpevals <- neirun$num.iter
+        
+            if(count==0) {
+                maxiter.nest <- max(5*nest.fpevals, 1000)
+            }
+            ans <- switch(base_fn, gauss_ngtp = daarem_lasso_gaussian_ngtp(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                      gauss_pgtn = daarem_lasso_gaussian_pgtn(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter.nest, tol, mon.tol, cycl.mon.tol),
+                      gauss_ngtp2 = daarem_lasso_gaussian_ngtp2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                      gauss_pgtn2 = daarem_lasso_gaussian_pgtn2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                      binomial_b = daarem_lasso_binomial(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                      binomial_b2 = daarem_lasso_binomial2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol))
+            total.fpevals <- total.fpevals + ans$fpevals + nest.fpevals
+            objfn.track <- c(objfn.track, neirun$objfn.track, ans$objfn.track)            
+            
+            done <- ans$convergence
+            count <- count + 1
+            par.init <- ans$par
+        }
+        ans$fpevals <- total.fpevals 
+        ans$objfn.track <- objfn.track
+  } else if(nesterov.init & family=="gaussian" & nesterov.safe==FALSE) {
+      par.init <- par
+      neirun <- NesterovInitialize(par=par.init, fixptfn=GDLassoStep, objfn = LassoObjFn, 
+                                   test = "monotone", X=X, y=y, lambda=lambda, stplngth=stplngth, control=list(maxiter=maxiter))
+      nest.fpevals <- neirun$num.iter
+      par <- neirun$par
+      
+      ans <- switch(base_fn, gauss_ngtp = daarem_lasso_gaussian_ngtp(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                    gauss_pgtn = daarem_lasso_gaussian_pgtn(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                    gauss_ngtp2 = daarem_lasso_gaussian_ngtp2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                    gauss_pgtn2 = daarem_lasso_gaussian_pgtn2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                    binomial_b = daarem_lasso_binomial(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                    binomial_b2 = daarem_lasso_binomial2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol))
+      ans$fpevals <- ans$fpevals + nest.fpevals
+      ans$objfn.track <- c(neirun$objfn.track, ans$objfn.track)
+  } else if(nesterov.init & family=="binomial") {
+      Xty <- crossprod(X, y)
+      par.init <- par
+      neirun <- NesterovInitialize(par=par.init, fixptfn=GDLogisticStep, objfn = LogisticObjFn, 
+                                 test = "monotone", X=X, Xty=Xty, lambda=lambda, stplngth=stplngth, 
+                                 control=list(maxiter=maxiter))
+      nest.fpevals <- neirun$num.iter
+      par <- neirun$par
+    
+      ans <- switch(base_fn, gauss_ngtp = daarem_lasso_gaussian_ngtp(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                    gauss_pgtn = daarem_lasso_gaussian_pgtn(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                    gauss_ngtp2 = daarem_lasso_gaussian_ngtp2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                    gauss_pgtn2 = daarem_lasso_gaussian_pgtn2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                    binomial_b = daarem_lasso_binomial(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                    binomial_b2 = daarem_lasso_binomial2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol))
+      ans$fpevals <- ans$fpevals + nest.fpevals
+      ans$objfn.track <- c(neirun$objfn.track, ans$objfn.track)
+  } else {
+     ans <- switch(base_fn, gauss_ngtp = daarem_lasso_gaussian_ngtp(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+         gauss_pgtn = daarem_lasso_gaussian_pgtn(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+         gauss_ngtp2 = daarem_lasso_gaussian_ngtp2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+         gauss_pgtn2 = daarem_lasso_gaussian_pgtn2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+         binomial_b = daarem_lasso_binomial(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+         binomial_b2 = daarem_lasso_binomial2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol))
   }
-  ans <- switch(base_fn, gauss_ngtp = daarem_lasso_gaussian_ngtp(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter, tol, mon.tol, cycl.mon.tol),
-         gauss_pgtn = daarem_lasso_gaussian_pgtn(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter, tol, mon.tol, cycl.mon.tol),
-         gauss_ngtp2 = daarem_lasso_gaussian_ngtp2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter, tol, mon.tol, cycl.mon.tol),
-         gauss_pgtn2 = daarem_lasso_gaussian_pgtn2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter, tol, mon.tol, cycl.mon.tol),
-         binomial_b = daarem_lasso_binomial(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter, tol, mon.tol, cycl.mon.tol),
-         binomial_b2 = daarem_lasso_binomial2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter, tol, mon.tol, cycl.mon.tol))
-  ans$fpevals <- ans$fpevals + nest.fpevals
-  print(nest.fpevals)
+  #ans$fpevals <- ans$fpevals + nest.fpevals
+  #ans$nest.iters <- nest.fpevals
   return(ans)
 }
 
