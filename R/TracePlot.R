@@ -8,5 +8,5 @@ TracePlot <- function(obj, opt.estimate=NULL, plot.trace=TRUE, col="black", lwd=
     plot(tr, type="n", log="y", las=1, xlab="Iteration", ylab="Objective - Optimum", ...)
     lines(1:niter, tr, col=col, lwd=lwd)
   }
-  return(list(num.iter=niter, trace=tr))
+  invisible(list(num.iter=niter, trace=tr))
 }
