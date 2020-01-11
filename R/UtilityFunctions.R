@@ -3,7 +3,7 @@
 ## objective functions for lasso, the lasso gradient descent updating function
 ## and the expit function
 
-LogisticObjFn <- function(par, X, Xty, lambda) {
+LogisticObjFn <- function(par, X, Xty, lambda, stplngth) {
   X.beta <- as.vector(X%*%par)
   p1 <- sum(par*Xty)
   
