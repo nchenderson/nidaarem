@@ -1,10 +1,16 @@
-daarem_lasso_gaussian_pgtn2 <- function(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter, tol, mon.tol, cycl.mon.tol) {
+daarem_lasso_gaussian_pgtn2 <- function(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter, 
+                                        tol, mtol, cycl.mon.tol) {
+    ## DAAREM for Lasso problem where there is no monitoring of the objective function.
     num.params <- ncol(X)
     lasso.pen <- lambda
     Fdiff <- Xdiff <- matrix(0.0, nrow=num.params, ncol=nlag)
     resid_vals <- objfn_track <- rep(NA, maxiter + 2)
     kr <- .01
-    rho <- .95
+    if(length(mtol)==2) {
+        rho <- .95
+    } else {
+        rho <- mtol[1]
+    }
 
     yty <- sum(y*y)
     Xty <- crossprod(X, y)
@@ -25,7 +31,6 @@ daarem_lasso_gaussian_pgtn2 <- function(par, X, y, lambda, stplngth, nlag, a1, k
     shrink.count <- 0
     shrink.target <- 1/(1 + a1^kappa)
  
-  
     lambda.ridge <- 100000
     r.penalty <- 0
     conv <- TRUE
@@ -64,64 +69,48 @@ daarem_lasso_gaussian_pgtn2 <- function(par, X, y, lambda, stplngth, nlag, a1, k
         dd <- (dvec*uy)/(dvec^2 + lambda.ridge)
         gamma_vec <- crossprod(tmp$vt, dd)
 
-        if(class(gamma_vec) != "try-error"){
+        xbar <- xnew - drop(Xtmp%*%gamma_vec)
+        fbar <- fnew - drop(Ftmp%*%gamma_vec)
 
-             xbar <- xnew - drop(Xtmp%*%gamma_vec)
-             fbar <- fnew - drop(Ftmp%*%gamma_vec)
-
-             x.propose <- xbar + fbar
+        x.propose <- xbar + fbar
            
-             ftmp <- SoftThresh(x.propose + stplngth*(Xty - crossprod(X,X%*%x.propose)), lambda=lambda*stplngth) - x.propose
-             ss.tmp <- sqrt(crossprod(ftmp))
+        ftmp <- SoftThresh(x.propose + stplngth*(Xty - crossprod(X,X%*%x.propose)), lambda=lambda*stplngth) - x.propose
+        ss.tmp <- sqrt(crossprod(ftmp))
              
-             theor.val <- (DD*krg)/((n.aa + 1)^(1 + .05))
-             #print(c(ss.tmp, theor.val))
-            # if(ss.tmp > theor.val) {
-            #      n.viol <- n.viol + 1
-            # }
-             if(ss.tmp <= min(ss.resids + rho^k, theor.val)) {
-                 ## Increase delta
-                    fold <- fnew
-                    xold <- xnew
+        theor.val <- (DD*krg)/((n.aa + 1)^(1 + .05))
+        if(ss.tmp <= min(ss.resids + rho^k, theor.val)) {
+             ## Increase delta
+             fold <- fnew
+             xold <- xnew
                      
-                    xnew <- x.propose
-                    fnew <- ftmp
-                    ss.resids <- ss.tmp
+             xnew <- x.propose
+             fnew <- ftmp
+             ss.resids <- ss.tmp
                     
-                    shrink.count <- shrink.count + 1
-                    n.aa <- n.aa + 1
-             } else {
-                 ## Keep delta the same
-                    fold <- fnew
-                    xold <- xnew
+             shrink.count <- shrink.count + 1
+             n.aa <- n.aa + 1
+         } else {
+             ## Keep delta the same
+             fold <- fnew
+             xold <- xnew
 
-                    xnew <- SoftThresh(xold + stplngth*(Xty - crossprod(X,X%*%xold)), lambda=lambda*stplngth)
-                    fnew <- SoftThresh(xnew + stplngth*(Xty - crossprod(X,X%*%xnew)), lambda=lambda*stplngth) - xnew
-                    ss.resids <- sqrt(crossprod(fnew))
-             }
-             
-       } else {
-            ## Keep delta the same
-            fold <- fnew
-            xold <- xnew
-
-            xnew <- SoftThresh(xold + stplngth*(Xty - crossprod(X,X%*%xold)), lambda=lambda*stplngth)
-            fnew <- SoftThresh(xnew + stplngth*(Xty - crossprod(X,X%*%xnew)), lambda=lambda*stplngth) - xnew
-            ss.resids <- sqrt(crossprod(fnew))
-            
-            count <- 0
-       }
-       if(ss.resids < tol & count==nlag) break
+             xnew <- SoftThresh(xold + stplngth*(Xty - crossprod(X,X%*%xold)), lambda=lambda*stplngth)
+             fnew <- SoftThresh(xnew + stplngth*(Xty - crossprod(X,X%*%xnew)), lambda=lambda*stplngth) - xnew
+             ss.resids <- sqrt(crossprod(fnew))
+         }
+         if(ss.resids < tol & count==nlag) break
       
-       resid_vals[k + 2] <- ss.resids
-       objfn_track[k + 2] <-  LassoObjFn_pgtn(xnew, X, Xty, yty, lasso.pen)
-       if(count==nlag) {
-            count <- 0
-            ## restart count
-       }
-       
-       shrink.target <-  1/(1 + a1^(kappa - shrink.count))
-       k <- k+1
+         resid_vals[k + 2] <- ss.resids
+         objfn_track[k + 2] <-  LassoObjFn_pgtn(xnew, X, Xty, yty, lasso.pen)
+         if(count==nlag) {
+             count <- 0
+             if(length(mtol)==2) {
+                rho = ifelse(rho==mtol[1], mtol[2], mtol[1])
+             } 
+             ## restart count
+         }
+         shrink.target <-  1/(1 + a1^(kappa - shrink.count))
+         k <- k+1
     }
     value.obj <- LassoObjFn_pgtn(xnew, X, Xty, yty, lasso.pen)
     resid_vals <- resid_vals[!is.na(resid_vals)]
