@@ -1,4 +1,5 @@
-daarem_lasso_gaussian_ngtp <- function(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter, tol, mon.tol, cycl.mon.tol) {
+daarem_lasso_gaussian_ngtp <- function(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter, 
+                                       tol, mtol, cycl.mon.tol) {
     num.params <- ncol(X)
     lasso.pen <- lambda
     Fdiff <- Xdiff <- matrix(0.0, nrow=num.params, ncol=nlag)
@@ -22,13 +23,16 @@ daarem_lasso_gaussian_ngtp <- function(par, X, y, lambda, stplngth, nlag, a1, ka
     shrink.count <- 0
     shrink.target <- 1/(1 + a1^kappa)
 
-
-
     lambda.ridge <- 100000
     r.penalty <- 0
     conv <- TRUE
     num.em <- 0  ## number of EM fallbacks
     ell.star <- obj_funvals[2]
+    if(length(mtol)==2) {
+        mon.tol <- mtol[1]
+    } else if(length(mtol)==1) {
+        mon.tol <- mtol
+    }
     while(k < maxiter) {
         count <- count + 1
 
@@ -56,7 +60,6 @@ daarem_lasso_gaussian_ngtp <- function(par, X, y, lambda, stplngth, nlag, a1, ka
             shrink.count <- shrink.count - 2
         }
 
-        ### Still need to compute Ftf
         Ftf <- sqrt(sum(as.vector(crossprod(Ftmp, fnew))^2))
         tmp_lam <- DampingFind(uy.sq, dvec, a1, kappa, shrink.count, Ftf, lambda.start=lambda.ridge, r.start=r.penalty)
         lambda.ridge <- tmp_lam$lambda
@@ -65,62 +68,42 @@ daarem_lasso_gaussian_ngtp <- function(par, X, y, lambda, stplngth, nlag, a1, ka
         dd <- (dvec*uy)/(dvec^2 + lambda.ridge)
         gamma_vec <- tmp$v%*%dd
 
-        if(class(gamma_vec) != "try-error"){
+        xbar <- xnew - drop(Xtmp%*%gamma_vec)
+        fbar <- fnew - drop(Ftmp%*%gamma_vec)
+        x.propose <- xbar + fbar
+        new.objective.val <- try(LassoObjFn_ngtp(x.propose, XtX, Xty, yty, lasso.pen), silent=TRUE)
+        obj.evals <- obj.evals + 1
 
-             xbar <- xnew - drop(Xtmp%*%gamma_vec)
-             fbar <- fnew - drop(Ftmp%*%gamma_vec)
+        if(class(new.objective.val) != "try-error" & !is.na(obj_funvals[k+1]) &
+            !is.nan(new.objective.val)) {
+            if(new.objective.val >= obj_funvals[k+1] - mon.tol) {
+                ## Increase delta
+                obj_funvals[k+2] <- new.objective.val
+                fold <- fnew
+                xold <- xnew
 
-             x.propose <- xbar + fbar
-             new.objective.val <- try(LassoObjFn_ngtp(x.propose, XtX, Xty, yty, lasso.pen), silent=TRUE)
+                xnew <- x.propose
+                shrink.count <- shrink.count + 1
+            } else {
+                ## Keep delta the same
+                fold <- fnew
+                xold <- xnew
+                xnew <- fold + xold
 
-             obj.evals <- obj.evals + 1
-
-             if(class(new.objective.val) != "try-error" & !is.na(obj_funvals[k+1]) &
-                !is.nan(new.objective.val)) {
-                 if(new.objective.val >= obj_funvals[k+1] - mon.tol) {
-                 ## Increase delta
-                    obj_funvals[k+2] <- new.objective.val
-                    fold <- fnew
-                    xold <- xnew
-
-                    xnew <- x.propose
-                    shrink.count <- shrink.count + 1
-                 } else {
-                 ## Keep delta the same
-                    fold <- fnew
-                    xold <- xnew
-
-                    xnew <- fold + xold
-
-                    obj_funvals[k+2] <- LassoObjFn_ngtp(xnew, XtX, Xty, yty, lasso.pen)
-                    obj.evals <- obj.evals + 1
-                    #num.em <- num.em + 1
-                 }
-             } else {
-                 ## Keep delta the same
-                 fold <- fnew
-                 xold <- xnew
-
-                 xnew <- fold + xold
-
-                 obj_funvals[k+2] <- LassoObjFn_ngtp(xnew, XtX, Xty, yty, lasso.pen)  ### need to add ngtp here?
-
-                 obj.evals <- obj.evals + 1
-                 count <- 0
-                 #num.em <- num.em + 1
+                obj_funvals[k+2] <- LassoObjFn_ngtp(xnew, XtX, Xty, yty, lasso.pen)
+                obj.evals <- obj.evals + 1
+                #num.em <- num.em + 1
             }
        } else {
-            ## Keep delta the same
-            fold <- fnew
-            xold <- xnew
+           ## Keep delta the same
+           fold <- fnew
+           xold <- xnew
+           xnew <- fold + xold
 
-            xnew <- fold + xold
-
-            obj_funvals[k+2] <- LassoObjFn_ngtp(xnew, XtX, Xty, yty, lasso.pen)
-
-            obj.evals <- obj.evals + 1
-            count <- 0
-            #num.em <- num.em + 1
+           obj_funvals[k+2] <- LassoObjFn_ngtp(xnew, XtX, Xty, yty, lasso.pen)  
+           obj.evals <- obj.evals + 1
+           count <- 0
+           #num.em <- num.em + 1
        }
        if(count==nlag) {
             count <- 0
@@ -131,6 +114,9 @@ daarem_lasso_gaussian_ngtp <- function(par, X, y, lambda, stplngth, nlag, a1, ka
                shrink.count <- max(shrink.count - nlag, -2*kappa)
             }
             ell.star <- obj_funvals[k+2]
+            if(length(mtol)==2) {
+                mon.tol= ifelse(mon.tol==mtol[1], mtol[2], mtol[1])
+            } 
        }
        shrink.target <-  1/(1 + a1^(kappa - shrink.count))
        k <- k+1
