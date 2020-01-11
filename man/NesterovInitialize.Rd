@@ -77,5 +77,5 @@ ne.grad <- NesterovInitialize(par=rep(0, p), fixptfn=GDLassoStep, objfn = LassoO
 ne.mon$num.iter
 ne.grad$num.iter
 }
-\keyword{ ~kwd1 }% use one of  RShowDoc("KEYWORDS")
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\keyword{ acceleration }% use one of  RShowDoc("KEYWORDS")
+\keyword{ momentum }% __ONLY ONE__ keyword per line
