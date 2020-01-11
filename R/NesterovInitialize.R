@@ -19,11 +19,23 @@ NesterovInitialize <-  function(par, fixptfn, objfn=NULL, test="monotone", ...,
         beta.new <- fixptfn(beta.vecy, ...) ## x_k, y_k = beta.vecy
         oval <- objfn(beta.new, ...)
         if(test=="monotone") {
-           done <- oval < objfn.val[k] 
+           done1 <- oval < objfn.val[k] 
         } else if(test == "gradient") {
-           done <- sum((beta.vecy - beta.new)*(beta.new - beta.old)) > 0 
-        }        
-        if(done) {
+           done1 <- sum((beta.vecy - beta.new)*(beta.new - beta.old)) > 0 
+        }
+        ### perform a second "done test" here.
+        #if(done1) {
+        #    xold <- beta.new  ##x0
+        #    xnew <- fixptfn(xold, ...) ## x1
+        #    fold <- xnew - xold ## f0 and Delta x0
+        #    fnew <- fixptfn(xnew, ...) - xnew ## f1
+        #    deltaf <- fnew - fold ## Delta f0
+        #    gamma.aa <- sum(deltaf*f1)/sum(deltaf*deltaf)
+        #    x.aa <- xnew + fnew - gamma.aa*fnew
+        #    oval.aa <- objfn(x.aa, ...)
+        #    aa.test <- ifelse(oval.aa > , TRUE, FALSE)
+        #}
+        if(done1) {
             break
         } 
         ## Update tseq
@@ -37,5 +49,5 @@ NesterovInitialize <-  function(par, fixptfn, objfn=NULL, test="monotone", ...,
     }
     objfn.val <- objfn.val[!is.na(objfn.val)]
     value.obj <- objfn.val[k]
-    return(list(par=beta.new, value.obj=value.obj, objfn.val=objfn.val, num.iter=k))
+    return(list(par=beta.new, value.obj=value.obj, objfn.track=objfn.val, num.iter=k))
 }
