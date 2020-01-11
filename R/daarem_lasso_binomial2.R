@@ -1,10 +1,15 @@
-daarem_lasso_binomial2 <- function(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter, tol, mon.tol, cycl.mon.tol) {
+daarem_lasso_binomial2 <- function(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter, 
+                                   tol, mtol, cycl.mon.tol) {
     num.params <- ncol(X)
     lasso.pen <- lambda
     Fdiff <- Xdiff <- matrix(0.0, nrow=num.params, ncol=nlag)
     resid_vals <- objfn_track <- rep(NA, maxiter + 2)
-    kr <- 0
-    rho <- 0.95
+    kr <- .01
+    if(length(mtol)==2) {
+      rho <- .95
+    } else {
+      rho <- mtol[1]
+    }
     
     Xty <- crossprod(X, y)
     
@@ -26,8 +31,6 @@ daarem_lasso_binomial2 <- function(par, X, y, lambda, stplngth, nlag, a1, kappa,
     shrink.count <- 0
     shrink.target <- 1/(1 + a1^kappa)
   
- 
-  
     lambda.ridge <- 100000
     r.penalty <- 0
     conv <- TRUE
@@ -43,7 +46,6 @@ daarem_lasso_binomial2 <- function(par, X, y, lambda, stplngth, nlag, a1, kappa,
 
         Fdiff[,count] <- fnew - fold
         Xdiff[,count] <- xnew - xold
-
 
         np <- count
         Ftmp <- matrix(Fdiff[,1:np], nrow=length(fnew), ncol=np)
@@ -70,21 +72,16 @@ daarem_lasso_binomial2 <- function(par, X, y, lambda, stplngth, nlag, a1, kappa,
         dd <- (dvec*uy)/(dvec^2 + lambda.ridge)
         gamma_vec <- tmp$v%*%dd
 
-        if(class(gamma_vec) != "try-error"){
-
-             xbar <- xnew - drop(Xtmp%*%gamma_vec)
-             fbar <- fnew - drop(Ftmp%*%gamma_vec)
-
-             x.propose <- xbar + fbar
+        xbar <- xnew - drop(Xtmp%*%gamma_vec)
+        fbar <- fnew - drop(Ftmp%*%gamma_vec)
+        x.propose <- xbar + fbar
            
-             rr <- y - expit(X%*%x.propose)
-             ftmp <- SoftThresh(x.propose + stplngth*crossprod(X, rr), lambda=lambda*stplngth) - x.propose
-             #fnew <- SoftThresh(xnew + stplngth*crossprod(X, rr), lambda=lambda*stplngth) - xnew
-             ss.tmp <- sqrt(crossprod(ftmp))
+        rr <- y - expit(X%*%x.propose)
+        ftmp <- SoftThresh(x.propose + stplngth*crossprod(X, rr), lambda=lambda*stplngth) - x.propose
+        ss.tmp <- sqrt(crossprod(ftmp))
              
-             theor.val <- (DD*krg)/((n.aa + 1)^(1 + .05))
-             #print(c(ss.tmp,theor.val, k, n.aa))
-             if(ss.tmp <= min(ss.resids + rho^k, theor.val)) {
+        theor.val <- (DD*krg)/((n.aa + 1)^(1 + .05))
+        if(ss.tmp <= min(ss.resids + rho^k, theor.val)) {
                  ## Increase delta
                     fold <- fnew
                     xold <- xnew
@@ -95,7 +92,7 @@ daarem_lasso_binomial2 <- function(par, X, y, lambda, stplngth, nlag, a1, kappa,
                     
                     shrink.count <- shrink.count + 1
                     n.aa <- n.aa + 1
-             } else {
+         } else {
                  ## Keep delta the same
                     fold <- fnew
                     xold <- xnew
@@ -106,29 +103,18 @@ daarem_lasso_binomial2 <- function(par, X, y, lambda, stplngth, nlag, a1, kappa,
                     fnew <- SoftThresh(xnew + stplngth*crossprod(X, rr.new), lambda=lambda*stplngth) - xnew
                     ss.resids <- sqrt(crossprod(fnew))
                     fallback <- fallback + 1
-             }
-       } else {
-            ## Keep delta the same
-            fold <- fnew
-            xold <- xnew
-                    
-            rr.old <- y - expit(X%*%xold)
-            xnew <- SoftThresh(xold + stplngth*crossprod(X, rr.old), lambda=lambda*stplngth)
-            rr.new <- y - expit(X%*%xnew)
-            fnew <- SoftThresh(xnew + stplngth*crossprod(X, rr.new), lambda=lambda*stplngth) - xnew
-            ss.resids <- sqrt(crossprod(fnew))
-           
+          }
+          resid_vals[k + 2] <- ss.resids
+          objfn_track[k + 2] <-  LogisticObjFn(xnew, X, Xty, lasso.pen)
+          if(ss.resids < tol) break
+          if(count==nlag) {
             count <- 0
-            #num.em <- num.em + 1
-       }
-       resid_vals[k + 2] <- ss.resids
-       objfn_track[k + 2] <-  LogisticObjFn(xnew, X, Xty, lasso.pen)
-       if(ss.resids < tol) break
-       if(count==nlag) {
-            count <- 0
-       }
-       shrink.target <-  1/(1 + a1^(kappa - shrink.count))
-       k <- k+1
+            if(length(mtol)==2) {
+              rho = ifelse(rho==mtol[1], mtol[2], mtol[1])
+            } 
+          }
+          shrink.target <-  1/(1 + a1^(kappa - shrink.count))
+          k <- k+1
     }
     objfn_track <- objfn_track[!is.na(objfn_track)]
     value.obj <- LogisticObjFn(xnew, X, Xty, lasso.pen)
