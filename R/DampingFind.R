@@ -42,7 +42,11 @@ DampingFind <- function(uy.sq, dvec, aa, kappa, sk, Ftf, lambda.start=NULL,
   pow.up <- pow - 0.5
   l.stop <- exp(-0.5*log1p(aa^pow.low))
   u.stop <- exp(-0.5*log1p(aa^pow.up))
+  if(l.stop*betahat.ls.norm < 1e-32) {
+     l.stop <- 0
+  }
 
+  #print(c(lambda, LL, UU))
   ### Start iterations
   for(k in 1:maxit) {
     ### Check if lambda is inside lower and upper bounds
@@ -55,9 +59,9 @@ DampingFind <- function(uy.sq, dvec, aa, kappa, sk, Ftf, lambda.start=NULL,
     d.prime <- d.lambda/(d.sq + lambda)
     s.norm <- sqrt(sum(uy.sq*d.lambda))
     phi.val <- s.norm - vk
-    phi.der <- (-1)*sum(uy.sq*d.prime)/s.norm
-    phi.ratio <- phi.val/phi.der
-   
+    phi.der <- (-1)*sum(uy.sq*d.prime)
+    phi.ratio <- (s.norm*phi.val)/phi.der
+    
     d.u <- (dvec/(d.sq + LL))^2
     s.up <- sqrt(sum(uy.sq*d.u))
     ### Initial Lower bound is not correct
