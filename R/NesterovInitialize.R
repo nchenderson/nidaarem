@@ -1,13 +1,13 @@
 NesterovInitialize <-  function(par, fixptfn, objfn=NULL, test="monotone", ...,
-                                control=list(maxiter=500)) {
-    control.default <- list(maxiter=500)
+                                control=list(maxiter=500, tol=1e-7)) {
+    control.default <- list(maxiter=500, tol=1e-7)
     namc <- names(control)
     if (!all(namc %in% names(control.default))) {
        stop("unknown names in control: ", namc[!(namc %in% names(control.default))])
     }
     control <- modifyList(control.default, control)
     maxiter <- control$maxiter
-    
+    tols <- control$tol
     
     pp <- length(par)
     conv <- TRUE
@@ -15,6 +15,7 @@ NesterovInitialize <-  function(par, fixptfn, objfn=NULL, test="monotone", ...,
     objfn.val <- rep(NA, maxiter+1)
     alpha <- 1
     objfn.val[1] <- objfn(beta.old, ...)
+    conv <- FALSE
     for(k in 1:maxiter) {
         beta.new <- fixptfn(beta.vecy, ...) ## x_k, y_k = beta.vecy
         oval <- objfn(beta.new, ...)
@@ -38,6 +39,7 @@ NesterovInitialize <-  function(par, fixptfn, objfn=NULL, test="monotone", ...,
         if(done1) {
             break
         } 
+       
         ## Update tseq
         alpha.new <- 1/2 + sqrt(1 + 4*alpha*alpha)/2
         mom <- (alpha - 1)/alpha.new
@@ -45,9 +47,16 @@ NesterovInitialize <-  function(par, fixptfn, objfn=NULL, test="monotone", ...,
         
         beta.vecy <- beta.new + mom*(beta.new - beta.old)
         objfn.val[k+1] <- objfn(beta.new, ...)
+        
+        ss.resids <- sqrt(crossprod(beta.new - beta.old))
+        done2 <- ss.resids < tols
+        if(done2) {
+           conv <- TRUE
+           break
+        }
         beta.old <- beta.new
     }
     objfn.val <- objfn.val[!is.na(objfn.val)]
     value.obj <- objfn.val[k]
-    return(list(par=beta.new, value.obj=value.obj, objfn.track=objfn.val, num.iter=k))
+    return(list(par=beta.new, value.objfn=value.obj, objfn.track=objfn.val, fpevals=k, convergence=conv))
 }
