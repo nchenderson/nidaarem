@@ -60,68 +60,45 @@ daarem.lasso <- function(par, X, y, lambda, stplngth=NULL, nesterov.init=FALSE,
   #    par <- tmp$par
   #}
   nest.fpevals <- 0
-  if(nesterov.init & family=="gaussian" & nesterov.safe==TRUE) {
-        done <- FALSE
-        count <- 0
-        par.init <- par
-        total.fpevals <- 0
-        objfn.track <- NULL
-        while(!done & count < 5) {
-            neirun <- NesterovInitialize(par=par.init, fixptfn=GDLassoStep, objfn = LassoObjFn, 
-                           test = "monotone", X=X, y=y, lambda=lambda, stplngth=stplngth, control=list(maxiter=maxiter))
-            par <- neirun$par
-            nest.fpevals <- neirun$num.iter
-        
-            if(count==0) {
-                maxiter.nest <- max(5*nest.fpevals, 1000)
-            }
-            ans <- switch(base_fn, gauss_ngtp = daarem_lasso_gaussian_ngtp(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
-                      gauss_pgtn = daarem_lasso_gaussian_pgtn(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter.nest, tol, mon.tol, cycl.mon.tol),
-                      gauss_ngtp2 = daarem_lasso_gaussian_ngtp2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
-                      gauss_pgtn2 = daarem_lasso_gaussian_pgtn2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
-                      binomial_b = daarem_lasso_binomial(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
-                      binomial_b2 = daarem_lasso_binomial2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol))
-            total.fpevals <- total.fpevals + ans$fpevals + nest.fpevals
-            objfn.track <- c(objfn.track, neirun$objfn.track, ans$objfn.track)            
-            
-            done <- ans$convergence
-            count <- count + 1
-            par.init <- ans$par
-        }
-        ans$fpevals <- total.fpevals 
-        ans$objfn.track <- objfn.track
-  } else if(nesterov.init & family=="gaussian" & nesterov.safe==FALSE) {
+  if(nesterov.init & family=="gaussian") {
       par.init <- par
       neirun <- NesterovInitialize(par=par.init, fixptfn=GDLassoStep, objfn = LassoObjFn, 
-                                   test = "monotone", X=X, y=y, lambda=lambda, stplngth=stplngth, control=list(maxiter=maxiter))
-      nest.fpevals <- neirun$num.iter
+                                   test = "monotone", X=X, y=y, lambda=lambda, stplngth=stplngth, 
+                                   control=list(maxiter=maxiter, tol=tol))
+      nest.fpevals <- neirun$fpevals
       par <- neirun$par
-      
-      ans <- switch(base_fn, gauss_ngtp = daarem_lasso_gaussian_ngtp(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
-                    gauss_pgtn = daarem_lasso_gaussian_pgtn(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
-                    gauss_ngtp2 = daarem_lasso_gaussian_ngtp2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
-                    gauss_pgtn2 = daarem_lasso_gaussian_pgtn2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
-                    binomial_b = daarem_lasso_binomial(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
-                    binomial_b2 = daarem_lasso_binomial2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol))
-      ans$fpevals <- ans$fpevals + nest.fpevals
-      ans$objfn.track <- c(neirun$objfn.track, ans$objfn.track)
+      if(!neirun$convergence) {
+          ans <- switch(base_fn, gauss_ngtp = daarem_lasso_gaussian_ngtp(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                        gauss_pgtn = daarem_lasso_gaussian_pgtn(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                        gauss_ngtp2 = daarem_lasso_gaussian_ngtp2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                        gauss_pgtn2 = daarem_lasso_gaussian_pgtn2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                        binomial_b = daarem_lasso_binomial(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                        binomial_b2 = daarem_lasso_binomial2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol))
+          ans$fpevals <- ans$fpevals + nest.fpevals
+          ans$objfn.track <- c(neirun$objfn.track, ans$objfn.track)
+      } else {
+          ans <- neirun
+      }
   } else if(nesterov.init & family=="binomial") {
       Xty <- crossprod(X, y)
       par.init <- par
       neirun <- NesterovInitialize(par=par.init, fixptfn=GDLogisticStep, objfn = LogisticObjFn, 
                                  test = "monotone", X=X, Xty=Xty, lambda=lambda, stplngth=stplngth, 
-                                 control=list(maxiter=maxiter))
-      nest.fpevals <- neirun$num.iter
+                                 control=list(maxiter=maxiter, tol=tol))
+      nest.fpevals <- neirun$fpevals
       par <- neirun$par
-    
-      ans <- switch(base_fn, gauss_ngtp = daarem_lasso_gaussian_ngtp(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
-                    gauss_pgtn = daarem_lasso_gaussian_pgtn(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
-                    gauss_ngtp2 = daarem_lasso_gaussian_ngtp2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
-                    gauss_pgtn2 = daarem_lasso_gaussian_pgtn2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
-                    binomial_b = daarem_lasso_binomial(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
-                    binomial_b2 = daarem_lasso_binomial2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol))
-      ans$fpevals <- ans$fpevals + nest.fpevals
-      ans$objfn.track <- c(neirun$objfn.track, ans$objfn.track)
+      if(!neirun$convergence) {
+          ans <- switch(base_fn, gauss_ngtp = daarem_lasso_gaussian_ngtp(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                        gauss_pgtn = daarem_lasso_gaussian_pgtn(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                        gauss_ngtp2 = daarem_lasso_gaussian_ngtp2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                        gauss_pgtn2 = daarem_lasso_gaussian_pgtn2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                        binomial_b = daarem_lasso_binomial(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
+                        binomial_b2 = daarem_lasso_binomial2(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol))
+          ans$fpevals <- ans$fpevals + nest.fpevals
+           ans$objfn.track <- c(neirun$objfn.track, ans$objfn.track)
+      } else {
+          ans <- neirun
+      }
   } else {
      ans <- switch(base_fn, gauss_ngtp = daarem_lasso_gaussian_ngtp(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
          gauss_pgtn = daarem_lasso_gaussian_pgtn(par, X, y, lambda, stplngth, nlag, a1, kappa, maxiter - nest.fpevals, tol, mon.tol, cycl.mon.tol),
