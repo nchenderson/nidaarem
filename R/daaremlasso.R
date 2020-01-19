@@ -1,5 +1,5 @@
 daarem.lasso <- function(par, X, y, lambda, stplngth=NULL, nesterov.init=FALSE,
-                         nesterov.safe=TRUE, family = c("gaussian", "binomial"), control=list()) {
+                         family = c("gaussian", "binomial"), control=list()) {
 
   if("objfn.check" %in% names(control)) {
       if(control$objfn.check) {
