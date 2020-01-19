@@ -1,4 +1,5 @@
 export(NesterovInitialize, SoftThresh, FindStepLengthGaussian, daarem.lasso, LassoObjFn, 
-       GDLassoStep, Nesterov, TracePlot, LogisticObjFn, expit, GDLogisticStep)
+       GDLassoStep, Nesterov, TracePlot, LogisticObjFn, expit, GDLogisticStep,
+       MatrixCompleteUpdate, MatrixCompleteObj)
 importFrom("stats", "dbinom", "dnorm", "pnorm", "runif", "uniroot")
 importFrom("utils", "modifyList")
