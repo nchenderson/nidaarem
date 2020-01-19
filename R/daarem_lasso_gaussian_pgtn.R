@@ -154,12 +154,12 @@ daarem_lasso_gaussian_pgtn <- function(par, X, y, lambda, stplngth, nlag, a1, ka
                 mon.tol= ifelse(mon.tol==mtol[1], mtol[2], mtol[1])
             } 
             ell.star <- obj_funvals[k+2]
-            xtmp <- SoftThresh(xnew + stplngth*(Xty - crossprod(X, X%*%xnew)), lambda=lambda*stplngth)
-            objtmp <- LassoObjFn_pgtn(xtmp, X, Xty, yty, lasso.pen)
-            pred.val[h] <- 2*nlag*(objtmp - ell.star) + ell.star
-            actual.val[h] <- ell.star
+            #xtmp <- SoftThresh(xnew + stplngth*(Xty - crossprod(X, X%*%xnew)), lambda=lambda*stplngth)
+            #objtmp <- LassoObjFn_pgtn(xtmp, X, Xty, yty, lasso.pen)
+            #pred.val[h] <- 2*nlag*(objtmp - ell.star) + ell.star
+            #actual.val[h] <- ell.star
               
-            h <- h+1
+            #h <- h+1
             #################################################################
             #xold <- xnew
             #xnew <- SoftThresh(xold + stplngth*(Xty - crossprod(X, X%*%xold)), lambda=lambda*stplngth)
