@@ -1,6 +1,7 @@
-MatrixCompleteObj <- function(par, lambda, Y, PY, ind) {
-  B <- matrix(par, nrow=nrow(PY), ncol=ncol(PY))
+MatrixCompleteObj <- function(par, lambda, A, PA, ind) {
+  B <- matrix(par, nrow=nrow(PA), ncol=ncol(PA))
   svdB <- svd(B)
-  ans <- sum((par[ind] - Y)*(par[ind] - Y))/2 + lambda*sum(svdB$d)
+  
+  ans <- sum((par[ind] - A)*(par[ind] - A))/2 + lambda*sum(svdB$d)
   return(-ans)
 }
