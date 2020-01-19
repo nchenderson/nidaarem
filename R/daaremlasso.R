@@ -55,10 +55,6 @@ daarem.lasso <- function(par, X, y, lambda, stplngth=NULL, nesterov.init=FALSE,
   } else if(family == "binomial" & !control$objfn.check) {
       base_fn <- "binomial_b2"
   }
-  #if(nesterov.init=TRUE) {
-  #    tmp <- NesterovInitialize(par, fixptfn, )
-  #    par <- tmp$par
-  #}
   nest.fpevals <- 0
   if(nesterov.init & family=="gaussian") {
       par.init <- par
