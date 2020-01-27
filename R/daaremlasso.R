@@ -31,6 +31,7 @@ daarem.lasso <- function(par, X, y, lambda, stplngth=NULL, nesterov.init=FALSE,
   kappa <- control$kappa
 
   num.params <- length(par)
+  nobs <- nrow(X)
   nlag <- min(control$order, ceiling(num.params/2))
 
   lasso.pen <- lambda
@@ -47,9 +48,9 @@ daarem.lasso <- function(par, X, y, lambda, stplngth=NULL, nesterov.init=FALSE,
   }
 
   if(family=="gaussian" & control$objfn.check) {
-      base_fn <- ifelse(n > p, "gauss_ngtp", "gauss_pgtn")
+      base_fn <- ifelse(nobs > num.params, "gauss_ngtp", "gauss_pgtn")
   } else if(family=="gaussian" & !control$objfn.check) {
-      base_fn <- ifelse(n > p, "gauss_ngtp2", "gauss_pgtn2")
+      base_fn <- ifelse(nobs > num.params, "gauss_ngtp2", "gauss_pgtn2")
   } else if(family=="binomial" & control$objfn.check) {
       base_fn <- "binomial_b"
   } else if(family == "binomial" & !control$objfn.check) {
