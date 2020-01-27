@@ -8,7 +8,7 @@ NIDAAREM acceleration of penalized regression
 Uses the NIDAAREM procedure to accelerate proximal gradient algorithms for fitting l1-penalized regression.
 }
 \usage{
-daarem.lasso(par, X, y, lambda, stplngth = NULL, nesterov.init = FALSE, nesterov.safe = TRUE, family = c("gaussian", "binomial"), control = list())
+daarem.lasso(par, X, y, lambda, stplngth = NULL, nesterov.init = FALSE, family = c("gaussian", "binomial"), control = list())
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
