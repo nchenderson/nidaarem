@@ -1,4 +1,4 @@
-nidaarem <- function(par, fixptfn, objfn, ..., control=list()) {
+nidaarem <- function(par, fixptfn, objfn, nesterov.init=TRUE,..., control=list()) {
   
   if("objfn.check" %in% names(control)) {
     if(control$objfn.check) {
@@ -27,17 +27,22 @@ nidaarem <- function(par, fixptfn, objfn, ..., control=list()) {
   nlag <- min(control$order, ceiling(num.params/2))
   
   if(!missing(objfn)) {
-    par.init <- par
-    neirun <- NesterovInitialize(par=par.init, fixptfn=fixptfn, objfn = objfn, 
-                                 control=list(maxiter=maxiter, tol=tol), ...)
+    if(nesterov.init) {
+        par.init <- par
+        neirun <- NesterovInitialize(par=par.init, fixptfn=fixptfn, objfn = objfn, 
+                                     control=list(maxiter=maxiter, tol=tol), ...)
     
-    nest.fpevals <- neirun$fpevals
-    par <- neirun$par
-    if(!neirun$convergence) {
+        nest.fpevals <- neirun$fpevals
+        par <- neirun$par
+        if(!neirun$convergence) {
+             ans <- daaram_base_objfn(par, fixptfn, objfn, maxiter, tol, mon.tol, 
+                                      cycl.mon.tol, a1, kappa, num.params, nlag, ...)
+        } else {
+             ans <- neirun
+        }
+    } else {
         ans <- daaram_base_objfn(par, fixptfn, objfn, maxiter, tol, mon.tol, 
                                  cycl.mon.tol, a1, kappa, num.params, nlag, ...)
-    } else {
-        ans <- neirun
     }
   } else {
     ans <- daarem_base_noobjfn(par, fixptfn, maxiter, tol, resid.tol, 
