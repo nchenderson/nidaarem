@@ -5,7 +5,8 @@ Version: 0.1
 Date: 2019-09-12
 Authors@R: c(person("Nicholas", "Henderson", email = "nchender@umich.edu", role = c("cre", "aut")), person("Ravi", "Varadhan", email = "ravi.varadhan@jhu.edu", role = "aut"))
 Maintainer: Nicholas Henderson <nchender@umich.edu>
-Imports: stats, utils
+Imports: stats, utils, RSpectra
+Depends: RcppEigen
 Description: Implements the NIDAAREM method for accelerating the convergence of slowly converging gradient and proximal gradient descent algorithms. 
 License: GPL-2
 Encoding: UTF-8

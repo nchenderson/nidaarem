@@ -1,5 +1,5 @@
 sub_daarem_lasso_gaussian_pgtn <- function(par, X, y, lambda, stplngth, nlag, a1, kappa, 
-                                           maxiter, tol, mtol, cycl.mon.tol, sub.size, sub.type) {
+                                           maxiter, tol, mtol, cycl.mon.tol, sub.type) {
 
     num.params <- ncol(X)
     lasso.pen <- lambda

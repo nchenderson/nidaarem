@@ -9,3 +9,4 @@ MatrixCompleteUpdate <- function(par, lambda, A, PA, ind) {
   ans <- svd_soft_thresh(Atmp, lambda*tt)
   return(c(ans))
 }
+

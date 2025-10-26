@@ -35,18 +35,18 @@ nidaarem <- function(par, fixptfn, objfn, nesterov.init=TRUE,..., control=list()
         nest.fpevals <- neirun$fpevals
         par <- neirun$par
         if(!neirun$convergence) {
-             ans <- daaram_base_objfn(par, fixptfn, objfn, maxiter, tol, mon.tol, 
-                                      cycl.mon.tol, a1, kappa, num.params, nlag, ...)
+             ans <- daaram_base_objfn(par=par, fixptfn=fixptfn, objfn=objfn, maxiter=maxiter, tol=tol, mtol=mon.tol, 
+                                      cycl.mon.tol=cycl.mon.tol, a1=a1, kappa=kappa, num.params=num.params, nlag=nlag, ...)
         } else {
              ans <- neirun
         }
     } else {
-        ans <- daaram_base_objfn(par, fixptfn, objfn, maxiter, tol, mon.tol, 
-                                 cycl.mon.tol, a1, kappa, num.params, nlag, ...)
+        ans <- daaram_base_objfn(par=par, fixptfn=fixptfn, objfn=objfn, maxiter=maxiter, tol=tol, mtol=mon.tol, 
+                                 cycl.mon.tol=cycl.mon.tol, a1=a1, kappa=kappa, num.params=num.params, nlag=nlag, ...)
     }
   } else {
-    ans <- daarem_base_noobjfn(par, fixptfn, maxiter, tol, resid.tol, 
-                               a1, kappa, num.params, nlag, ...) 
+    ans <- daarem_base_noobjfn(par=par, fixptfn=fixptfn, maxiter=maxiter, tol=tol, resid.tol=resid.tol, 
+                               a1=a1, kappa=kappa, num.params=num.params, nlag=nlag, ...) 
   }
   if(!ans$convergence) {
     warning("Algorithm did not converge")

@@ -1,11 +1,18 @@
-daaram_base_objfn <- function(par, fixptfn, objfn, maxiter, tol, mtol, 
-                              cycl.mon.tol, a1, kappa, num.params, nlag, ...) {
+ProxDaaram <- function(par, fixptfn, objfn, maxiter, tol, num.params, nlag, lam, stp,
+                       ...) {
+  
+  mtol <- c(1,0) 
+  cycl.mon.tol <- 0.0
+  kappa <- 25
+  a1 <- 1.2
   
   Fdiff <- Xdiff <- matrix(0.0, nrow=num.params, ncol=nlag)
   obj_funvals <- rep(NA, maxiter + 2)
   
-  xold <- par
-  xnew <- fixptfn(xold, ...)
+  yold <- par
+  xold <- SoftThresh(yold, lambda=lam*stp)
+  ynew <- fixptfn(xold, ...)
+  xnew <- SoftThresh(ynew, lambda=lam*stp)
   obj_funvals[1] <- objfn(xold, ...)
   obj_funvals[2] <- objfn(xnew, ...)
   likchg <- obj_funvals[2] - obj_funvals[1]
@@ -33,13 +40,13 @@ daaram_base_objfn <- function(par, fixptfn, objfn, maxiter, tol, mtol,
     if(ss.resids < tol & count==nlag) break
     
     Fdiff[,count] <- fnew - fold
-    Xdiff[,count] <- xnew - xold
+    Xdiff[,count] <- ynew - yold
     
     np <- count
     if(np==1) {
       Ftmp <- matrix(Fdiff[,1], nrow=num.params, ncol=np)
       Xtmp <- matrix(Xdiff[,1], nrow=num.params, ncol=np)  ## is this matrix function needed?
-     
+      
     } else {
       Ftmp <- Fdiff[,1:np]
       Xtmp <- Xdiff[,1:np]  
@@ -58,10 +65,11 @@ daaram_base_objfn <- function(par, fixptfn, objfn, maxiter, tol, mtol,
     dd <- (dvec*uy)/(dvec.sq + lambda.ridge)
     gamma_vec <- crossprod(tmp$vt, dd)
     
-    xbar <- xnew - drop(Xtmp%*%gamma_vec)
+    ybar <- ynew - drop(Xtmp%*%gamma_vec)
     fbar <- fnew - drop(Ftmp%*%gamma_vec)
     
-    x.propose <- xbar + fbar
+    y.propose <- ybar + fbar
+    x.propose <- SoftThresh(y.propose, lambda=lam*stp)
     new.objective.val <- try(objfn(x.propose, ...), silent=TRUE)
     obj.evals <- obj.evals + 1
     
@@ -71,25 +79,31 @@ daaram_base_objfn <- function(par, fixptfn, objfn, maxiter, tol, mtol,
         ## Increase delta
         obj_funvals[k+2] <- new.objective.val
         fold <- fnew
-        xold <- xnew
+        yold <- ynew
         
-        xnew <- x.propose
+        ynew <- y.propose
+        xold <- xnew
+        xnew <- SoftThresh(ynew, lambda=lam*stp)
         shrink.count <- shrink.count + 1
       } else {
         ## Keep delta the same
         fold <- fnew
-        xold <- xnew
+        yold <- ynew
         
-        xnew <- fold + xold
+        ynew <- fold + yold
+        xold <- xnew
+        xnew <- SoftThresh(ynew, lambda=lam*stp)
         obj_funvals[k+2] <- objfn(xnew, ...)
         obj.evals <- obj.evals + 1
       }
     } else {
       ## Keep delta the same
       fold <- fnew
-      xold <- xnew
+      yold <- ynew
       
-      xnew <- fold + xold
+      ynew <- fold + yold
+      xold <- xnew
+      xnew <- SoftThresh(ynew, lambda=lam*stp)
       obj_funvals[k+2] <- objfn(xnew, ...)
       obj.evals <- obj.evals + 1
       count <- 0
